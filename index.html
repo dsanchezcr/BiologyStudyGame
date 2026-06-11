@@ -482,60 +482,60 @@
       restart:       "⟳ Restart",
       next:          "Next →",
       complete:      "Deck Complete!",
-      you_scored:    (p, c, t) => `You scored ${p}% (${c}/${t})`,
-      lbl_correct:   "Correct",
-      lbl_incorrect: "Incorrect",
-      play_again:    "Play Again",
-      theme_to_light:"☀️",
-      theme_to_dark: "🌙",
+      you_scored:         (p, c, t) => `You scored ${p}% (${c}/${t})`,
+      lbl_correct:        "Correct",
+      lbl_incorrect:      "Incorrect",
+      play_again:         "Play Again",
+      aria_theme_to_light:"Switch to light theme",
+      aria_theme_to_dark: "Switch to dark theme",
     },
     es: {
-      title:         "Tarjetas de Biología – Estructuras Celulares",
-      h1:            "🔬 Tarjetas de Biología",
-      subtitle:      "Estructuras y Orgánulos Celulares",
-      correct:       "Correctas",
-      incorrect:     "Incorrectas",
-      remaining:     "Restantes",
-      card_of:       (n, t) => `Tarjeta ${n} de ${t}`,
-      face_term:     "Término",
-      face_def:      "Definición",
-      hint:          "Haz clic para revelar la definición",
-      still_learning:"✗ Aún Aprendiendo",
-      got_it:        "✓ ¡Lo Sé!",
-      prev:          "← Anterior",
-      restart:       "⟳ Reiniciar",
-      next:          "Siguiente →",
-      complete:      "¡Mazo Completo!",
-      you_scored:    (p, c, t) => `Obtuviste ${p}% (${c}/${t})`,
-      lbl_correct:   "Correctas",
-      lbl_incorrect: "Incorrectas",
-      play_again:    "Jugar de Nuevo",
-      theme_to_light:"☀️",
-      theme_to_dark: "🌙",
+      title:              "Tarjetas de Biología – Estructuras Celulares",
+      h1:                 "🔬 Tarjetas de Biología",
+      subtitle:           "Estructuras y Orgánulos Celulares",
+      correct:            "Correctas",
+      incorrect:          "Incorrectas",
+      remaining:          "Restantes",
+      card_of:            (n, t) => `Tarjeta ${n} de ${t}`,
+      face_term:          "Término",
+      face_def:           "Definición",
+      hint:               "Haz clic para revelar la definición",
+      still_learning:     "✗ Aún Aprendiendo",
+      got_it:             "✓ ¡Lo Sé!",
+      prev:               "← Anterior",
+      restart:            "⟳ Reiniciar",
+      next:               "Siguiente →",
+      complete:           "¡Mazo Completo!",
+      you_scored:         (p, c, t) => `Obtuviste ${p}% (${c}/${t})`,
+      lbl_correct:        "Correctas",
+      lbl_incorrect:      "Incorrectas",
+      play_again:         "Jugar de Nuevo",
+      aria_theme_to_light:"Cambiar a tema claro",
+      aria_theme_to_dark: "Cambiar a tema oscuro",
     },
     pt: {
-      title:         "Fichas de Biologia – Estruturas Celulares",
-      h1:            "🔬 Fichas de Biologia",
-      subtitle:      "Estruturas e Organelas Celulares",
-      correct:       "Corretas",
-      incorrect:     "Incorretas",
-      remaining:     "Restantes",
-      card_of:       (n, t) => `Ficha ${n} de ${t}`,
-      face_term:     "Termo",
-      face_def:      "Definição",
-      hint:          "Clique para revelar a definição",
-      still_learning:"✗ Ainda Aprendendo",
-      got_it:        "✓ Entendi!",
-      prev:          "← Anterior",
-      restart:       "⟳ Reiniciar",
-      next:          "Próxima →",
-      complete:      "Baralho Completo!",
-      you_scored:    (p, c, t) => `Você pontuou ${p}% (${c}/${t})`,
-      lbl_correct:   "Corretas",
-      lbl_incorrect: "Incorretas",
-      play_again:    "Jogar Novamente",
-      theme_to_light:"☀️",
-      theme_to_dark: "🌙",
+      title:              "Fichas de Biologia – Estruturas Celulares",
+      h1:                 "🔬 Fichas de Biologia",
+      subtitle:           "Estruturas e Organelas Celulares",
+      correct:            "Corretas",
+      incorrect:          "Incorretas",
+      remaining:          "Restantes",
+      card_of:            (n, t) => `Ficha ${n} de ${t}`,
+      face_term:          "Termo",
+      face_def:           "Definição",
+      hint:               "Clique para revelar a definição",
+      still_learning:     "✗ Ainda Aprendendo",
+      got_it:             "✓ Entendi!",
+      prev:               "← Anterior",
+      restart:            "⟳ Reiniciar",
+      next:               "Próxima →",
+      complete:           "Baralho Completo!",
+      you_scored:         (p, c, t) => `Você pontuou ${p}% (${c}/${t})`,
+      lbl_correct:        "Corretas",
+      lbl_incorrect:      "Incorretas",
+      play_again:         "Jogar Novamente",
+      aria_theme_to_light:"Mudar para tema claro",
+      aria_theme_to_dark: "Mudar para tema escuro",
     },
   };
 
@@ -736,7 +736,9 @@
     currentTheme = theme;
     document.documentElement.setAttribute('data-theme', theme);
     const t = i18n[currentLang];
-    btnTheme.textContent = theme === 'dark' ? t.theme_to_light : t.theme_to_dark;
+    const toLight = theme === 'dark';
+    btnTheme.textContent = toLight ? '☀️' : '🌙';
+    btnTheme.setAttribute('aria-label', toLight ? t.aria_theme_to_light : t.aria_theme_to_dark);
     localStorage.setItem('bio-theme', theme);
   }
 
@@ -767,16 +769,20 @@
     document.getElementById('res-lbl-correct').textContent = t.lbl_correct;
     document.getElementById('res-lbl-incorrect').textContent = t.lbl_incorrect;
     document.getElementById('btn-play-again').textContent  = t.play_again;
-    btnTheme.textContent = currentTheme === 'dark' ? t.theme_to_light : t.theme_to_dark;
+    // Update theme button aria-label for new language (emoji stays the same)
+    const toLight = currentTheme === 'dark';
+    btnTheme.setAttribute('aria-label', toLight ? t.aria_theme_to_light : t.aria_theme_to_dark);
 
     // Update active language button
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.lang === lang);
     });
 
-    // Re-render dynamic text that depends on language
-    updateCard();
-    updateScore();
+    // Re-render dynamic text that depends on language (only when deck is ready)
+    if (deck.length) {
+      updateCard();
+      updateScore();
+    }
 
     // If completion screen is visible, re-render its dynamic message
     if (completion.classList.contains('show')) {
