@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biology Flashcards – Cell Structures</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Dark theme (default) ─────────────────────────────────── */
+    :root {
+      --bg:               #0d1b2a;
+      --surface:          #1b2d45;
+      --surface-hover:    #253d5a;
+      --border:           rgba(255,255,255,.09);
+      --accent:           #00c9a7;
+      --accent2:          #4facfe;
+      --correct:          #22c55e;
+      --incorrect:        #ef4444;
+      --text:             #e2e8f0;
+      --muted:            #94a3b8;
+      --card-front-bg:    linear-gradient(135deg, #1e3a5f, #0f2540);
+      --card-back-bg:     linear-gradient(135deg, #0f3d2e, #072318);
+      --card-front-border:rgba(79,172,254,.25);
+      --card-back-border: rgba(0,201,167,.25);
+      --card-front-text:  #ffffff;
+      --card-back-text:   #d1fae5;
+      --card-w:           min(540px, 92vw);
+      --card-h:           min(320px, 55vw + 60px);
+      --radius:           1.25rem;
+      --shadow:           0 20px 60px rgba(0,0,0,.5);
+      --restart-text:     #0d1b2a;
+    }
+
+    /* ── Light theme ──────────────────────────────────────────── */
+    [data-theme="light"] {
+      --bg:               #f0f4f8;
+      --surface:          #ffffff;
+      --surface-hover:    #e2e8f0;
+      --border:           rgba(0,0,0,.1);
+      --text:             #1e293b;
+      --muted:            #64748b;
+      --card-front-bg:    linear-gradient(135deg, #dbeafe, #eff6ff);
+      --card-back-bg:     linear-gradient(135deg, #dcfce7, #f0fdf4);
+      --card-front-border:rgba(59,130,246,.35);
+      --card-back-border: rgba(34,197,94,.35);
+      --card-front-text:  #1e3a5f;
+      --card-back-text:   #166534;
+      --shadow:           0 20px 60px rgba(0,0,0,.12);
+      --restart-text:     #0d1b2a;
+    }
+
+    /* ── Smooth theme transition ──────────────────────────────── */
+    body, .score-pill, .card-front, .card-back, .completion,
+    .result-card, .nav-btns button, .lang-btn, #btn-theme {
+      transition: background .3s, background-color .3s, color .3s,
+                  border-color .3s, box-shadow .3s;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem 1rem 3rem;
+      gap: 1.25rem;
+    }
+
+    /* ── Toolbar (theme + language) ───────────────────────────── */
+    .toolbar {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: .75rem;
+    }
+    .lang-btns { display: flex; gap: .35rem; }
+    .lang-btn {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: .3rem .75rem;
+      border-radius: 99px;
+      font-size: .8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .lang-btn.active {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #0d1b2a;
+      border-color: transparent;
+    }
+    .lang-btn:not(.active):hover { background: var(--surface-hover); color: var(--text); }
+
+    #btn-theme {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: .3rem .7rem;
+      border-radius: 99px;
+      font-size: 1rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    #btn-theme:hover { background: var(--surface-hover); }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      width: 100%;
+      max-width: 600px;
+    }
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .25rem;
+    }
+    header p { color: var(--muted); font-size: .9rem; }
+
+    /* ── Score bar ────────────────────────────────────────────── */
+    .scoreboard {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .score-pill {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--surface);
+      border-radius: 99px;
+      padding: .45rem 1.1rem;
+      font-size: .85rem;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+    .score-pill .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-correct   { background: var(--correct); }
+    .dot-incorrect { background: var(--incorrect); }
+    .dot-total     { background: var(--accent2); }
+
+    /* ── Progress ─────────────────────────────────────────────── */
+    .progress-wrap {
+      width: var(--card-w);
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--surface);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      transition: width .4s ease;
+    }
+
+    /* ── Flashcard scene ──────────────────────────────────────── */
+    .scene {
+      width: var(--card-w);
+      height: var(--card-h);
+      perspective: 1000px;
+      cursor: pointer;
+    }
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform .65s cubic-bezier(.4,0,.2,1);
+      border-radius: var(--radius);
+    }
+    .scene.flipped .card { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+      gap: .75rem;
+    }
+
+    /* Front face */
+    .card-front {
+      background: var(--card-front-bg);
+      border: 1px solid var(--card-front-border);
+    }
+    .card-front .face-label {
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      font-weight: 700;
+    }
+    .card-front .term {
+      font-size: clamp(1.3rem, 3.5vw, 1.85rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--card-front-text);
+    }
+    .card-front .hint {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: .25rem;
+    }
+
+    /* Back face */
+    .card-back {
+      background: var(--card-back-bg);
+      border: 1px solid var(--card-back-border);
+      transform: rotateY(180deg);
+    }
+    .card-back .face-label {
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .card-back .definition {
+      font-size: clamp(.85rem, 2.2vw, 1.05rem);
+      line-height: 1.6;
+      color: var(--card-back-text);
+    }
+
+    /* ── Answer buttons ───────────────────────────────────────── */
+    .answer-btns {
+      display: flex;
+      gap: 1rem;
+      width: var(--card-w);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .answer-btns button {
+      flex: 1;
+      min-width: 130px;
+      max-width: 200px;
+      padding: .75rem 1.2rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, opacity .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .45rem;
+    }
+    .answer-btns button:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .answer-btns button:not(:disabled):hover { transform: translateY(-2px); }
+    .answer-btns button:not(:disabled):active { transform: translateY(0); }
+
+    #btn-correct {
+      background: var(--correct);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(34,197,94,.35);
+    }
+    #btn-incorrect {
+      background: var(--incorrect);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(239,68,68,.35);
+    }
+
+    /* ── Navigation ───────────────────────────────────────────── */
+    .nav-btns {
+      display: flex;
+      gap: .75rem;
+      align-items: center;
+    }
+    .nav-btns button {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: .6rem 1.4rem;
+      border-radius: 99px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s, color .3s, border-color .3s;
+    }
+    .nav-btns button:hover { background: var(--surface-hover); transform: translateY(-1px); }
+    .nav-btns button:active { transform: translateY(0); }
+    .nav-btns button:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+    #btn-restart {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: var(--restart-text);
+      border: none;
+      padding: .6rem 1.6rem;
+      border-radius: 99px;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    #btn-restart:hover { opacity: .85; transform: translateY(-1px); }
+
+    /* ── Completion screen ────────────────────────────────────── */
+    .completion {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      width: var(--card-w);
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+      border: 1px solid var(--card-front-border);
+    }
+    .completion.show { display: flex; }
+    .completion .emoji { font-size: 3.5rem; }
+    .completion h2 { font-size: 1.6rem; }
+    .completion .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      width: 100%;
+    }
+    .result-card {
+      background: var(--bg);
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    .result-card .val { font-size: 2rem; font-weight: 800; }
+    .result-card .lbl { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+    .result-card.c .val { color: var(--correct); }
+    .result-card.w .val { color: var(--incorrect); }
+
+    #btn-play-again {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: var(--restart-text);
+      border: none;
+      padding: .75rem 2rem;
+      border-radius: 99px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    #btn-play-again:hover { opacity: .85; transform: translateY(-1px); }
+
+    /* ── Misc ─────────────────────────────────────────────────── */
+    .flip-icon { font-size: 1.4rem; animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .4; }
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- Toolbar: language switcher + theme toggle -->
+<div class="toolbar">
+  <div class="lang-btns">
+    <button class="lang-btn active" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="es">ES</button>
+    <button class="lang-btn" data-lang="pt">PT</button>
+  </div>
+  <button id="btn-theme" aria-label="Toggle theme">🌙</button>
+</div>
+
+<header>
+  <h1 id="hdr-title">🔬 Biology Flashcards</h1>
+  <p id="hdr-subtitle">Cell Structures &amp; Organelles</p>
+</header>
+
+<!-- Score board -->
+<div class="scoreboard">
+  <div class="score-pill"><span class="dot dot-correct"></span><span id="lbl-correct">Correct</span>: <span id="score-correct">0</span></div>
+  <div class="score-pill"><span class="dot dot-incorrect"></span><span id="lbl-incorrect">Incorrect</span>: <span id="score-incorrect">0</span></div>
+  <div class="score-pill"><span class="dot dot-total"></span><span id="lbl-remaining">Remaining</span>: <span id="score-remaining">20</span></div>
+</div>
+
+<!-- Progress -->
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span id="card-index">Card 1 of 20</span>
+    <span id="pct">0%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+</div>
+
+<!-- Flashcard -->
+<div class="scene" id="scene" role="button" aria-label="Flip card" tabindex="0">
+  <div class="card">
+    <div class="card-face card-front">
+      <span class="face-label" id="lbl-face-term">Term</span>
+      <span class="term" id="term-text"></span>
+      <span class="hint"><span class="flip-icon">↻</span> <span id="lbl-hint">Click to reveal definition</span></span>
+    </div>
+    <div class="card-face card-back">
+      <span class="face-label" id="lbl-face-def">Definition</span>
+      <p class="definition" id="def-text"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Answer buttons (shown only after flip) -->
+<div class="answer-btns" id="answer-btns">
+  <button id="btn-incorrect" disabled>✗ Still Learning</button>
+  <button id="btn-correct"   disabled>✓ Got It!</button>
+</div>
+
+<!-- Navigation -->
+<div class="nav-btns">
+  <button id="btn-prev">← Prev</button>
+  <button id="btn-restart">⟳ Restart</button>
+  <button id="btn-next">Next →</button>
+</div>
+
+<!-- Completion screen -->
+<div class="completion" id="completion">
+  <div class="emoji" id="comp-emoji">🎉</div>
+  <h2 id="comp-title">Deck Complete!</h2>
+  <p id="comp-msg" style="color:var(--muted)"></p>
+  <div class="result-grid">
+    <div class="result-card c">
+      <div class="val" id="res-correct">0</div>
+      <div class="lbl" id="res-lbl-correct">Correct</div>
+    </div>
+    <div class="result-card w">
+      <div class="val" id="res-incorrect">0</div>
+      <div class="lbl" id="res-lbl-incorrect">Incorrect</div>
+    </div>
+  </div>
+  <button id="btn-play-again">Play Again</button>
+</div>
+
+<script>
+  /* ── i18n strings ───────────────────────────────────────────── */
+  const i18n = {
+    en: {
+      title:         "Biology Flashcards – Cell Structures",
+      h1:            "🔬 Biology Flashcards",
+      subtitle:      "Cell Structures & Organelles",
+      correct:       "Correct",
+      incorrect:     "Incorrect",
+      remaining:     "Remaining",
+      card_of:       (n, t) => `Card ${n} of ${t}`,
+      face_term:     "Term",
+      face_def:      "Definition",
+      hint:          "Click to reveal definition",
+      still_learning:"✗ Still Learning",
+      got_it:        "✓ Got It!",
+      prev:          "← Prev",
+      restart:       "⟳ Restart",
+      next:          "Next →",
+      complete:      "Deck Complete!",
+      you_scored:         (p, c, t) => `You scored ${p}% (${c}/${t})`,
+      lbl_correct:        "Correct",
+      lbl_incorrect:      "Incorrect",
+      play_again:         "Play Again",
+      aria_theme_to_light:"Switch to light theme",
+      aria_theme_to_dark: "Switch to dark theme",
+    },
+    es: {
+      title:              "Tarjetas de Biología – Estructuras Celulares",
+      h1:                 "🔬 Tarjetas de Biología",
+      subtitle:           "Estructuras y Orgánulos Celulares",
+      correct:            "Correctas",
+      incorrect:          "Incorrectas",
+      remaining:          "Restantes",
+      card_of:            (n, t) => `Tarjeta ${n} de ${t}`,
+      face_term:          "Término",
+      face_def:           "Definición",
+      hint:               "Haz clic para revelar la definición",
+      still_learning:     "✗ Aún Aprendiendo",
+      got_it:             "✓ ¡Lo Sé!",
+      prev:               "← Anterior",
+      restart:            "⟳ Reiniciar",
+      next:               "Siguiente →",
+      complete:           "¡Mazo Completo!",
+      you_scored:         (p, c, t) => `Obtuviste ${p}% (${c}/${t})`,
+      lbl_correct:        "Correctas",
+      lbl_incorrect:      "Incorrectas",
+      play_again:         "Jugar de Nuevo",
+      aria_theme_to_light:"Cambiar a tema claro",
+      aria_theme_to_dark: "Cambiar a tema oscuro",
+    },
+    pt: {
+      title:              "Fichas de Biologia – Estruturas Celulares",
+      h1:                 "🔬 Fichas de Biologia",
+      subtitle:           "Estruturas e Organelas Celulares",
+      correct:            "Corretas",
+      incorrect:          "Incorretas",
+      remaining:          "Restantes",
+      card_of:            (n, t) => `Ficha ${n} de ${t}`,
+      face_term:          "Termo",
+      face_def:           "Definição",
+      hint:               "Clique para revelar a definição",
+      still_learning:     "✗ Ainda Aprendendo",
+      got_it:             "✓ Entendi!",
+      prev:               "← Anterior",
+      restart:            "⟳ Reiniciar",
+      next:               "Próxima →",
+      complete:           "Baralho Completo!",
+      you_scored:         (p, c, t) => `Você pontuou ${p}% (${c}/${t})`,
+      lbl_correct:        "Corretas",
+      lbl_incorrect:      "Incorretas",
+      play_again:         "Jogar Novamente",
+      aria_theme_to_light:"Mudar para tema claro",
+      aria_theme_to_dark: "Mudar para tema escuro",
+    },
+  };
+
+  /* ── Flashcard data (EN + ES + PT definitions) ──────────────── */
+  const cards = [
+    {
+      term: "Mitochondria",
+      def: {
+        en: "Double-membraned organelle that generates ATP through oxidative phosphorylation and the citric acid cycle; contains its own circular DNA and ribosomes, supporting the endosymbiotic theory of its bacterial ancestry.",
+        es: "Orgánulo de doble membrana que genera ATP mediante fosforilación oxidativa y el ciclo del ácido cítrico; contiene su propio ADN circular y ribosomas, sustentando la teoría endosimbiótica de su origen bacteriano.",
+        pt: "Organela de dupla membrana que gera ATP por meio da fosforilação oxidativa e do ciclo do ácido cítrico; contém seu próprio DNA circular e ribossomos, sustentando a teoria endossimbiótica de sua origem bacteriana."
+      }
+    },
+    {
+      term: "Rough Endoplasmic Reticulum",
+      def: {
+        en: "Network of flattened membrane sacs studded with ribosomes; the primary site of synthesis, folding, and initial glycosylation of membrane and secretory proteins before they are packaged into transport vesicles.",
+        es: "Red de sacos membranosos aplanados cubiertos de ribosomas; el sitio principal de síntesis, plegamiento y glicosilación inicial de proteínas de membrana y secretadas antes de ser empaquetadas en vesículas de transporte.",
+        pt: "Rede de sacos membranosos achatados cobertos de ribossomos; o principal local de síntese, dobramento e glicosilação inicial de proteínas de membrana e secretadas antes de serem embaladas em vesículas de transporte."
+      }
+    },
+    {
+      term: "Smooth Endoplasmic Reticulum",
+      def: {
+        en: "Ribosome-free tubular membrane network responsible for lipid and steroid hormone biosynthesis, carbohydrate metabolism, calcium ion storage, and detoxification of drugs and metabolic waste products.",
+        es: "Red tubular de membranas sin ribosomas responsable de la biosíntesis de lípidos y hormonas esteroides, el metabolismo de carbohidratos, el almacenamiento de iones de calcio y la desintoxicación de fármacos y desechos metabólicos.",
+        pt: "Rede tubular de membranas sem ribossomos responsável pela biossíntese de lipídios e hormônios esteroides, metabolismo de carboidratos, armazenamento de íons de cálcio e desintoxicação de fármacos e resíduos metabólicos."
+      }
+    },
+    {
+      term: "Golgi Apparatus",
+      def: {
+        en: "Stack of flattened cisternae that receives proteins from the ER, further modifies their glycosylation patterns, sorts them by signal sequences, and packages them into secretory, lysosomal, or plasma-membrane-bound vesicles.",
+        es: "Pila de cisternas aplanadas que recibe proteínas del RE, modifica sus patrones de glicosilación, las clasifica por secuencias señal y las empaqueta en vesículas secretoras, lisosomales o unidas a la membrana plasmática.",
+        pt: "Pilha de cisternas achatadas que recebe proteínas do RE, modifica ainda mais seus padrões de glicosilação, as classifica por sequências de sinal e as embala em vesículas secretoras, lisossomais ou ligadas à membrana plasmática."
+      }
+    },
+    {
+      term: "Lysosome",
+      def: {
+        en: "Membrane-bound organelle containing over 50 hydrolytic enzymes maintained at pH ~4.8 by V-type H⁺-ATPases; degrades macromolecules, defunct organelles (autophagy), and extracellular material via endocytosis.",
+        es: "Orgánulo unido a membrana que contiene más de 50 enzimas hidrolíticas mantenidas a pH ~4.8 por H⁺-ATPasas de tipo V; degrada macromoléculas, orgánulos defectuosos (autofagia) y material extracelular vía endocitosis.",
+        pt: "Organela ligada à membrana contendo mais de 50 enzimas hidrolíticas mantidas em pH ~4,8 por H⁺-ATPases do tipo V; degrada macromoléculas, organelas defeituosas (autofagia) e material extracelular por endocitose."
+      }
+    },
+    {
+      term: "Peroxisome",
+      def: {
+        en: "Single-membrane organelle that uses molecular oxygen to oxidize substrates, producing hydrogen peroxide (H₂O₂) which is immediately neutralized by catalase; central to β-oxidation of very-long-chain fatty acids and plasmalogen synthesis.",
+        es: "Orgánulo de membrana simple que usa oxígeno molecular para oxidar sustratos, produciendo peróxido de hidrógeno (H₂O₂) neutralizado inmediatamente por la catalasa; central en la β-oxidación de ácidos grasos de cadena muy larga y síntesis de plasmalógenos.",
+        pt: "Organela de membrana simples que usa oxigênio molecular para oxidar substratos, produzindo peróxido de hidrogênio (H₂O₂) neutralizado imediatamente pela catalase; central na β-oxidação de ácidos graxos de cadeia muito longa e síntese de plasmalogênios."
+      }
+    },
+    {
+      term: "Ribosome",
+      def: {
+        en: "Macromolecular complex of rRNA and proteins (80S in eukaryotes: 60S + 40S subunits) that catalyzes mRNA-directed polypeptide synthesis through the elongation, translocation, and termination steps of translation.",
+        es: "Complejo macromolecular de ARNr y proteínas (80S en eucariotas: subunidades 60S + 40S) que cataliza la síntesis de polipéptidos dirigida por ARNm a través de los pasos de elongación, translocación y terminación de la traducción.",
+        pt: "Complexo macromolecular de rRNA e proteínas (80S em eucariotos: subunidades 60S + 40S) que catalisa a síntese de polipeptídeos dirigida por mRNA por meio das etapas de elongação, translocação e terminação da tradução."
+      }
+    },
+    {
+      term: "Nucleus",
+      def: {
+        en: "Double-membrane-enclosed organelle housing the cell's chromosomal DNA; coordinates gene expression and DNA replication, and communicates with the cytoplasm via nuclear pore complexes that regulate macromolecule transport.",
+        es: "Orgánulo de doble membrana que alberga el ADN cromosómico de la célula; coordina la expresión génica y la replicación del ADN, y se comunica con el citoplasma a través de complejos de poros nucleares que regulan el transporte de macromoléculas.",
+        pt: "Organela de dupla membrana que abriga o DNA cromossômico da célula; coordena a expressão gênica e a replicação do DNA, e se comunica com o citoplasma por meio de complexos de poros nucleares que regulam o transporte de macromoléculas."
+      }
+    },
+    {
+      term: "Nucleolus",
+      def: {
+        en: "Non-membrane-bound nuclear subcompartment where ribosomal DNA (rDNA) is transcribed by RNA Pol I, pre-rRNA is processed, and large and small ribosomal subunits are assembled before export to the cytoplasm.",
+        es: "Subcompartimento nuclear sin membrana donde el ADN ribosómico (ADNr) es transcrito por la ARN Pol I, el pre-ARNr es procesado, y las subunidades ribosomales grande y pequeña son ensambladas antes de ser exportadas al citoplasma.",
+        pt: "Subcompartimento nuclear sem membrana onde o DNA ribossômico (rDNA) é transcrito pela RNA Pol I, o pré-rRNA é processado, e as subunidades ribossomais grande e pequena são montadas antes de serem exportadas para o citoplasma."
+      }
+    },
+    {
+      term: "Nuclear Envelope",
+      def: {
+        en: "Double lipid-bilayer structure (outer and inner membrane) continuous with the ER that encases the nucleus; contains ~2,000 nuclear pore complexes per cell that facilitate selective bidirectional macromolecular transport.",
+        es: "Estructura de doble bicapa lipídica (membrana externa e interna) continua con el RE que rodea el núcleo; contiene ~2.000 complejos de poros nucleares por célula que facilitan el transporte macromolecular bidireccional selectivo.",
+        pt: "Estrutura de dupla bicamada lipídica (membrana externa e interna) contínua com o RE que envolve o núcleo; contém ~2.000 complexos de poros nucleares por célula que facilitam o transporte macromolecular bidirecional seletivo."
+      }
+    },
+    {
+      term: "Plasma Membrane",
+      def: {
+        en: "Fluid mosaic phospholipid bilayer forming the cell boundary; regulates selective permeability via ion channels, carrier proteins, and pumps; hosts receptor tyrosine kinases and G-protein-coupled receptors for signal transduction.",
+        es: "Bicapa fosfolipídica de mosaico fluido que forma el límite celular; regula la permeabilidad selectiva a través de canales iónicos, proteínas transportadoras y bombas; alberga receptores tirosina quinasa y receptores acoplados a proteína G para la transducción de señales.",
+        pt: "Bicamada fosfolipídica em mosaico fluido que forma o limite celular; regula a permeabilidade seletiva por meio de canais iônicos, proteínas transportadoras e bombas; hospeda receptores tirosina quinase e receptores acoplados à proteína G para transdução de sinal."
+      }
+    },
+    {
+      term: "Cytoskeleton",
+      def: {
+        en: "Dynamic network of actin microfilaments (7 nm), intermediate filaments (10 nm), and microtubules (25 nm) that maintains cell shape, powers motility through motor proteins (myosin, kinesin, dynein), and organizes intracellular traffic.",
+        es: "Red dinámica de microfilamentos de actina (7 nm), filamentos intermedios (10 nm) y microtúbulos (25 nm) que mantiene la forma celular, impulsa la motilidad mediante proteínas motoras (miosina, kinesina, dineína) y organiza el tráfico intracelular.",
+        pt: "Rede dinâmica de microfilamentos de actina (7 nm), filamentos intermediários (10 nm) e microtúbulos (25 nm) que mantém a forma celular, impulsiona a motilidade por meio de proteínas motoras (miosina, cinesina, dineína) e organiza o tráfego intracelular."
+      }
+    },
+    {
+      term: "Centriole",
+      def: {
+        en: "Cylindrical organelle composed of nine triplet microtubule blades (9×3 arrangement) that forms the core of centrosomes; nucleates the mitotic spindle and serves as the basal body for cilia and flagella assembly.",
+        es: "Orgánulo cilíndrico compuesto por nueve hojas de microtúbulos tripletes (disposición 9×3) que forma el núcleo de los centrosomas; nuclela el huso mitótico y sirve como cuerpo basal para el ensamblaje de cilios y flagelos.",
+        pt: "Organela cilíndrica composta por nove lâminas de microtúbulos tripletos (arranjo 9×3) que forma o núcleo dos centrossomos; nucleia o fuso mitótico e serve como corpo basal para a montagem de cílios e flagelos."
+      }
+    },
+    {
+      term: "Chloroplast",
+      def: {
+        en: "Double-membraned plant organelle with an internal thylakoid membrane system; light reactions in thylakoids (photosystem I & II) generate ATP and NADPH, which power CO₂ fixation via the Calvin cycle in the stroma.",
+        es: "Orgánulo vegetal de doble membrana con un sistema interno de membrana tilacoide; las reacciones de luz en los tilacoides (fotosistema I y II) generan ATP y NADPH, que impulsan la fijación de CO₂ mediante el ciclo de Calvin en el estroma.",
+        pt: "Organela vegetal de dupla membrana com um sistema interno de membrana tilacoide; as reações de luz nos tilacoides (fotossistema I e II) geram ATP e NADPH, que impulsionam a fixação de CO₂ pelo ciclo de Calvin no estroma."
+      }
+    },
+    {
+      term: "Vacuole",
+      def: {
+        en: "Large single-membrane organelle in plant cells (tonoplast boundary) that maintains turgor pressure, stores metabolites, ions, and pigments, sequesters toxic compounds, and participates in autophagy and protein degradation.",
+        es: "Orgánulo grande de membrana simple en células vegetales (límite del tonoplasto) que mantiene la presión de turgencia, almacena metabolitos, iones y pigmentos, secuestra compuestos tóxicos y participa en la autofagia y la degradación de proteínas.",
+        pt: "Organela grande de membrana simples em células vegetais (limite do tonoplasto) que mantém a pressão de turgência, armazena metabólitos, íons e pigmentos, sequestra compostos tóxicos e participa da autofagia e da degradação de proteínas."
+      }
+    },
+    {
+      term: "Cell Wall",
+      def: {
+        en: "Rigid structural layer external to the plasma membrane; composed of cellulose microfibrils in plants, chitin in fungi, and peptidoglycan in bacteria; provides mechanical support, shape maintenance, and protection against osmotic lysis.",
+        es: "Capa estructural rígida externa a la membrana plasmática; compuesta de microfibrillas de celulosa en plantas, quitina en hongos y peptidoglicano en bacterias; proporciona soporte mecánico, mantenimiento de forma y protección contra la lisis osmótica.",
+        pt: "Camada estrutural rígida externa à membrana plasmática; composta de microfibrilas de celulose em plantas, quitina em fungos e peptidoglicano em bactérias; fornece suporte mecânico, manutenção de forma e proteção contra lise osmótica."
+      }
+    },
+    {
+      term: "Chromatin",
+      def: {
+        en: "Complex of genomic DNA wound around histone octamers (~147 bp per nucleosome core); higher-order folding into 30-nm fibers and chromosomal loops is regulated by histone modifications (acetylation, methylation) to control gene accessibility.",
+        es: "Complejo de ADN genómico enrollado alrededor de octámeros de histonas (~147 pb por núcleo nucleosómico); el plegamiento de orden superior en fibras de 30 nm y bucles cromosómicos está regulado por modificaciones de histonas (acetilación, metilación) para controlar la accesibilidad génica.",
+        pt: "Complexo de DNA genômico enrolado em torno de octâmeros de histonas (~147 pb por núcleo nucleossômico); o dobramento de ordem superior em fibras de 30 nm e alças cromossômicas é regulado por modificações de histonas (acetilação, metilação) para controlar a acessibilidade gênica."
+      }
+    },
+    {
+      term: "Flagellum (Eukaryotic)",
+      def: {
+        en: "Long motile projection anchored to a basal body; driven by axonemal dynein motors causing sliding between doublet microtubules in a '9+2' arrangement, generating a wave-like beat for propulsion in sperm and single-celled organisms.",
+        es: "Proyección móvil larga anclada a un cuerpo basal; impulsada por motores de dineína axonemal que causan el deslizamiento entre microtúbulos dobles en una disposición '9+2', generando un batido ondulatorio para la propulsión en espermatozoides y organismos unicelulares.",
+        pt: "Projeção móvel longa ancorada a um corpo basal; impulsionada por motores de dineína axonemal que causam o deslizamento entre microtúbulos duplos em um arranjo '9+2', gerando um batimento ondulatório para propulsão em espermatozoides e organismos unicelulares."
+      }
+    },
+    {
+      term: "Cilia",
+      def: {
+        en: "Short, numerous hair-like projections with the same '9+2' axonemal microtubule architecture as flagella; generate coordinated metachronal waves to move mucus in airways, CSF in brain ventricles, or propel unicellular organisms.",
+        es: "Proyecciones cortas y numerosas con la misma arquitectura axonemal '9+2' de microtúbulos que los flagelos; generan ondas metacronales coordinadas para mover el moco en las vías respiratorias, el LCR en los ventrículos cerebrales o propulsar organismos unicelulares.",
+        pt: "Projeções curtas e numerosas com a mesma arquitetura axonemal '9+2' de microtúbulos que os flagelos; geram ondas metacronais coordenadas para mover muco nas vias aéreas, LCR nos ventrículos cerebrais ou propelir organismos unicelulares."
+      }
+    },
+    {
+      term: "Endosome",
+      def: {
+        en: "Membrane-bound sorting compartment in the endocytic pathway; early endosomes receive cargo from endocytosis and sort it for recycling to the plasma membrane, delivery to lysosomes, or transcytosis across polarized epithelial cells.",
+        es: "Compartimento de clasificación unido a membrana en la vía endocítica; los endosomas tempranos reciben carga de la endocitosis y la clasifican para su reciclaje a la membrana plasmática, entrega a los lisosomas o transcitosis a través de células epiteliales polarizadas.",
+        pt: "Compartimento de triagem ligado à membrana na via endocítica; os endossomos iniciais recebem carga da endocitose e a classificam para reciclagem à membrana plasmática, entrega aos lisossomos ou transcitose através de células epiteliais polarizadas."
+      }
+    }
+  ];
+
+  /* ── State ──────────────────────────────────────────────────── */
+  let deck      = [];
+  let current   = 0;
+  let flipped   = false;
+  let correct   = 0;
+  let incorrect = 0;
+  let answered  = new Set();
+  let currentLang  = localStorage.getItem('bio-lang')  || 'en';
+  let currentTheme = localStorage.getItem('bio-theme') || 'dark';
+
+  /* ── DOM refs ───────────────────────────────────────────────── */
+  const scene       = document.getElementById('scene');
+  const termText    = document.getElementById('term-text');
+  const defText     = document.getElementById('def-text');
+  const scoreCorr   = document.getElementById('score-correct');
+  const scoreIncorr = document.getElementById('score-incorrect');
+  const scoreRem    = document.getElementById('score-remaining');
+  const cardIndex   = document.getElementById('card-index');
+  const pct         = document.getElementById('pct');
+  const fill        = document.getElementById('progress-fill');
+  const btnCorr     = document.getElementById('btn-correct');
+  const btnIncorr   = document.getElementById('btn-incorrect');
+  const btnPrev     = document.getElementById('btn-prev');
+  const btnNext     = document.getElementById('btn-next');
+  const btnRestart  = document.getElementById('btn-restart');
+  const completion  = document.getElementById('completion');
+  const btnTheme    = document.getElementById('btn-theme');
+
+  /* ── Theme ──────────────────────────────────────────────────── */
+  function applyTheme(theme) {
+    currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    const t = i18n[currentLang];
+    const toLight = theme === 'dark';
+    btnTheme.textContent = toLight ? '☀️' : '🌙';
+    btnTheme.setAttribute('aria-label', toLight ? t.aria_theme_to_light : t.aria_theme_to_dark);
+    localStorage.setItem('bio-theme', theme);
+  }
+
+  btnTheme.addEventListener('click', () => {
+    applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+  });
+
+  /* ── Language ───────────────────────────────────────────────── */
+  function applyTranslations(lang) {
+    currentLang = lang;
+    const t = i18n[lang];
+    document.documentElement.lang = lang;
+    document.title = t.title;
+    document.getElementById('hdr-title').textContent    = t.h1;
+    document.getElementById('hdr-subtitle').textContent = t.subtitle;
+    document.getElementById('lbl-correct').textContent   = t.correct;
+    document.getElementById('lbl-incorrect').textContent = t.incorrect;
+    document.getElementById('lbl-remaining').textContent = t.remaining;
+    document.getElementById('lbl-face-term').textContent = t.face_term;
+    document.getElementById('lbl-face-def').textContent  = t.face_def;
+    document.getElementById('lbl-hint').textContent      = t.hint;
+    btnIncorr.textContent = t.still_learning;
+    btnCorr.textContent   = t.got_it;
+    btnPrev.textContent    = t.prev;
+    btnRestart.textContent = t.restart;
+    btnNext.textContent    = t.next;
+    document.getElementById('comp-title').textContent      = t.complete;
+    document.getElementById('res-lbl-correct').textContent = t.lbl_correct;
+    document.getElementById('res-lbl-incorrect').textContent = t.lbl_incorrect;
+    document.getElementById('btn-play-again').textContent  = t.play_again;
+    // Update theme button aria-label for new language (emoji stays the same)
+    const toLight = currentTheme === 'dark';
+    btnTheme.setAttribute('aria-label', toLight ? t.aria_theme_to_light : t.aria_theme_to_dark);
+
+    // Update active language button
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+
+    // Re-render dynamic text that depends on language (only when deck is ready)
+    if (deck.length) {
+      updateCard();
+      updateScore();
+    }
+
+    // If completion screen is visible, re-render its dynamic message
+    if (completion.classList.contains('show')) {
+      const p = Math.round((correct / deck.length) * 100);
+      document.getElementById('comp-msg').textContent = t.you_scored(p, correct, deck.length);
+    }
+
+    localStorage.setItem('bio-lang', lang);
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyTranslations(btn.dataset.lang));
+  });
+
+  /* ── Helpers ────────────────────────────────────────────────── */
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function startDeck() {
+    deck      = shuffle(cards.map((_, i) => i));
+    current   = 0;
+    flipped   = false;
+    correct   = 0;
+    incorrect = 0;
+    answered  = new Set();
+    completion.classList.remove('show');
+    scene.classList.remove('hidden');
+    document.getElementById('answer-btns').classList.remove('hidden');
+    document.querySelector('.nav-btns').style.display    = '';
+    document.querySelector('.progress-wrap').style.display = '';
+    document.querySelector('.scoreboard').style.display  = '';
+    updateCard();
+    updateScore();
+  }
+
+  function updateCard() {
+    if (!deck.length) return;
+    const card = cards[deck[current]];
+    termText.textContent = card.term;
+    defText.textContent  = card.def[currentLang];
+
+    // Reset flip
+    scene.classList.remove('flipped');
+    flipped = false;
+
+    // Buttons are disabled until the card is flipped
+    btnCorr.disabled   = true;
+    btnIncorr.disabled = true;
+
+    // Navigation
+    btnPrev.disabled = (current === 0);
+    btnNext.disabled = (current === deck.length - 1);
+
+    // Progress
+    const done    = answered.size;
+    const total   = deck.length;
+    const percent = Math.round((done / total) * 100);
+    fill.style.width   = percent + '%';
+    pct.textContent    = percent + '%';
+    cardIndex.textContent = i18n[currentLang].card_of(current + 1, total);
+  }
+
+  function updateScore() {
+    scoreCorr.textContent   = correct;
+    scoreIncorr.textContent = incorrect;
+    scoreRem.textContent    = deck.length - answered.size;
+  }
+
+  function flipCard() {
+    flipped = !flipped;
+    scene.classList.toggle('flipped', flipped);
+    if (flipped && !answered.has(current)) {
+      btnCorr.disabled   = false;
+      btnIncorr.disabled = false;
+    }
+  }
+
+  function markAnswer(isCorrect) {
+    if (answered.has(current)) return;
+    answered.add(current);
+    if (isCorrect) correct++;
+    else incorrect++;
+    btnCorr.disabled   = true;
+    btnIncorr.disabled = true;
+    updateScore();
+    if (answered.size === deck.length) {
+      setTimeout(showCompletion, 600);
+    }
+  }
+
+  function showCompletion() {
+    const t        = i18n[currentLang];
+    const pctScore = Math.round((correct / deck.length) * 100);
+    const emoji    = pctScore >= 80 ? '🏆' : pctScore >= 50 ? '💪' : '📚';
+    document.getElementById('comp-emoji').textContent = emoji;
+    document.getElementById('comp-msg').textContent   = t.you_scored(pctScore, correct, deck.length);
+    document.getElementById('res-correct').textContent   = correct;
+    document.getElementById('res-incorrect').textContent = incorrect;
+
+    scene.classList.add('hidden');
+    document.getElementById('answer-btns').classList.add('hidden');
+    document.querySelector('.nav-btns').style.display    = 'none';
+    document.querySelector('.progress-wrap').style.display = 'none';
+    document.querySelector('.scoreboard').style.display  = 'none';
+    completion.classList.add('show');
+  }
+
+  /* ── Event listeners ────────────────────────────────────────── */
+  scene.addEventListener('click', flipCard);
+  scene.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flipCard(); }
+  });
+
+  btnCorr.addEventListener('click',   () => markAnswer(true));
+  btnIncorr.addEventListener('click', () => markAnswer(false));
+
+  btnPrev.addEventListener('click', () => {
+    if (current > 0) { current--; updateCard(); }
+  });
+  btnNext.addEventListener('click', () => {
+    if (current < deck.length - 1) { current++; updateCard(); }
+  });
+  btnRestart.addEventListener('click', startDeck);
+  document.getElementById('btn-play-again').addEventListener('click', startDeck);
+
+  /* ── Keyboard navigation ────────────────────────────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    if (e.key === 'ArrowRight' && !btnNext.disabled)   { current++; updateCard(); }
+    if (e.key === 'ArrowLeft'  && !btnPrev.disabled)   { current--; updateCard(); }
+    if (e.key === 'ArrowUp'    && !btnCorr.disabled)   markAnswer(true);
+    if (e.key === 'ArrowDown'  && !btnIncorr.disabled) markAnswer(false);
+  });
+
+  /* ── Init ───────────────────────────────────────────────────── */
+  applyTheme(currentTheme);
+  startDeck();
+  applyTranslations(currentLang);
+</script>
+</body>
+</html>
