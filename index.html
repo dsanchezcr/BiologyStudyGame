@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biology Flashcards – Cell Structures</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0d1b2a;
+      --surface:    #1b2d45;
+      --accent:     #00c9a7;
+      --accent2:    #4facfe;
+      --correct:    #22c55e;
+      --incorrect:  #ef4444;
+      --text:       #e2e8f0;
+      --muted:      #94a3b8;
+      --card-w:     min(540px, 92vw);
+      --card-h:     min(320px, 55vw + 60px);
+      --radius:     1.25rem;
+      --shadow:     0 20px 60px rgba(0,0,0,.5);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem 3rem;
+      gap: 1.5rem;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      width: 100%;
+      max-width: 600px;
+    }
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .25rem;
+    }
+    header p { color: var(--muted); font-size: .9rem; }
+
+    /* ── Score bar ────────────────────────────────────────────── */
+    .scoreboard {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .score-pill {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--surface);
+      border-radius: 99px;
+      padding: .45rem 1.1rem;
+      font-size: .85rem;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    .score-pill .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .dot-correct   { background: var(--correct); }
+    .dot-incorrect { background: var(--incorrect); }
+    .dot-total     { background: var(--accent2); }
+
+    /* ── Progress ─────────────────────────────────────────────── */
+    .progress-wrap {
+      width: var(--card-w);
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--surface);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      transition: width .4s ease;
+    }
+
+    /* ── Flashcard scene ──────────────────────────────────────── */
+    .scene {
+      width: var(--card-w);
+      height: var(--card-h);
+      perspective: 1000px;
+      cursor: pointer;
+    }
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform .65s cubic-bezier(.4,0,.2,1);
+      border-radius: var(--radius);
+    }
+    .scene.flipped .card { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+      gap: .75rem;
+    }
+
+    /* Front face */
+    .card-front {
+      background: linear-gradient(135deg, #1e3a5f, #0f2540);
+      border: 1px solid rgba(79,172,254,.25);
+    }
+    .card-front .face-label {
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      font-weight: 700;
+    }
+    .card-front .term {
+      font-size: clamp(1.3rem, 3.5vw, 1.85rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: #fff;
+    }
+    .card-front .hint {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: .25rem;
+    }
+
+    /* Back face */
+    .card-back {
+      background: linear-gradient(135deg, #0f3d2e, #072318);
+      border: 1px solid rgba(0,201,167,.25);
+      transform: rotateY(180deg);
+    }
+    .card-back .face-label {
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .card-back .definition {
+      font-size: clamp(.85rem, 2.2vw, 1.05rem);
+      line-height: 1.6;
+      color: #d1fae5;
+    }
+
+    /* ── Answer buttons ───────────────────────────────────────── */
+    .answer-btns {
+      display: flex;
+      gap: 1rem;
+      width: var(--card-w);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .answer-btns button {
+      flex: 1;
+      min-width: 130px;
+      max-width: 200px;
+      padding: .75rem 1.2rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, opacity .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .45rem;
+    }
+    .answer-btns button:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .answer-btns button:not(:disabled):hover { transform: translateY(-2px); }
+    .answer-btns button:not(:disabled):active { transform: translateY(0); }
+
+    #btn-correct {
+      background: var(--correct);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(34,197,94,.35);
+    }
+    #btn-incorrect {
+      background: var(--incorrect);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(239,68,68,.35);
+    }
+
+    /* ── Navigation ───────────────────────────────────────────── */
+    .nav-btns {
+      display: flex;
+      gap: .75rem;
+      align-items: center;
+    }
+    .nav-btns button {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: .6rem 1.4rem;
+      border-radius: 99px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .nav-btns button:hover { background: #253d5a; transform: translateY(-1px); }
+    .nav-btns button:active { transform: translateY(0); }
+    .nav-btns button:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+    #btn-restart {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #0d1b2a;
+      border: none;
+      padding: .6rem 1.6rem;
+      border-radius: 99px;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    #btn-restart:hover { opacity: .85; transform: translateY(-1px); }
+
+    /* ── Completion screen ────────────────────────────────────── */
+    .completion {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      width: var(--card-w);
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+      border: 1px solid rgba(79,172,254,.2);
+    }
+    .completion.show { display: flex; }
+    .completion .emoji { font-size: 3.5rem; }
+    .completion h2 { font-size: 1.6rem; }
+    .completion .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      width: 100%;
+    }
+    .result-card {
+      background: var(--bg);
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    .result-card .val {
+      font-size: 2rem;
+      font-weight: 800;
+    }
+    .result-card .lbl { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+    .result-card.c .val { color: var(--correct); }
+    .result-card.w .val { color: var(--incorrect); }
+
+    /* ── Misc ─────────────────────────────────────────────────── */
+    .flip-icon { font-size: 1.4rem; animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .4; }
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🔬 Biology Flashcards</h1>
+  <p>Cell Structures &amp; Organelles</p>
+</header>
+
+<!-- Score board -->
+<div class="scoreboard">
+  <div class="score-pill"><span class="dot dot-correct"></span>Correct: <span id="score-correct">0</span></div>
+  <div class="score-pill"><span class="dot dot-incorrect"></span>Incorrect: <span id="score-incorrect">0</span></div>
+  <div class="score-pill"><span class="dot dot-total"></span>Remaining: <span id="score-remaining">20</span></div>
+</div>
+
+<!-- Progress -->
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span id="card-index">Card 1 of 20</span>
+    <span id="pct">0%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+</div>
+
+<!-- Flashcard -->
+<div class="scene" id="scene" role="button" aria-label="Flip card" tabindex="0">
+  <div class="card">
+    <div class="card-face card-front">
+      <span class="face-label">Term</span>
+      <span class="term" id="term-text"></span>
+      <span class="hint"><span class="flip-icon">↻</span> Click to reveal definition</span>
+    </div>
+    <div class="card-face card-back">
+      <span class="face-label">Definition</span>
+      <p class="definition" id="def-text"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Answer buttons (shown only after flip) -->
+<div class="answer-btns" id="answer-btns">
+  <button id="btn-incorrect" disabled>✗ Still Learning</button>
+  <button id="btn-correct"   disabled>✓ Got It!</button>
+</div>
+
+<!-- Navigation -->
+<div class="nav-btns">
+  <button id="btn-prev">← Prev</button>
+  <button id="btn-restart">⟳ Restart</button>
+  <button id="btn-next">Next →</button>
+</div>
+
+<!-- Completion screen -->
+<div class="completion" id="completion">
+  <div class="emoji" id="comp-emoji">🎉</div>
+  <h2>Deck Complete!</h2>
+  <p id="comp-msg" style="color:var(--muted)"></p>
+  <div class="result-grid">
+    <div class="result-card c">
+      <div class="val" id="res-correct">0</div>
+      <div class="lbl">Correct</div>
+    </div>
+    <div class="result-card w">
+      <div class="val" id="res-incorrect">0</div>
+      <div class="lbl">Incorrect</div>
+    </div>
+  </div>
+  <button id="btn-play-again" style="
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    color:#0d1b2a; border:none; padding:.75rem 2rem;
+    border-radius:99px; font-size:1rem; font-weight:700; cursor:pointer;">
+    Play Again
+  </button>
+</div>
+
+<script>
+  /* ── Flashcard data ─────────────────────────────────────────── */
+  const cards = [
+    {
+      term: "Mitochondria",
+      def:  "Double-membraned organelle that generates ATP through oxidative phosphorylation and the citric acid cycle; contains its own circular DNA and ribosomes, supporting the endosymbiotic theory of its bacterial ancestry."
+    },
+    {
+      term: "Rough Endoplasmic Reticulum",
+      def:  "Network of flattened membrane sacs studded with ribosomes; the primary site of synthesis, folding, and initial glycosylation of membrane and secretory proteins before they are packaged into transport vesicles."
+    },
+    {
+      term: "Smooth Endoplasmic Reticulum",
+      def:  "Ribosome-free tubular membrane network responsible for lipid and steroid hormone biosynthesis, carbohydrate metabolism, calcium ion storage, and detoxification of drugs and metabolic waste products."
+    },
+    {
+      term: "Golgi Apparatus",
+      def:  "Stack of flattened cisternae that receives proteins from the ER, further modifies their glycosylation patterns, sorts them by signal sequences, and packages them into secretory, lysosomal, or plasma-membrane-bound vesicles."
+    },
+    {
+      term: "Lysosome",
+      def:  "Membrane-bound organelle containing over 50 hydrolytic enzymes maintained at pH ~4.8 by V-type H⁺-ATPases; degrades macromolecules, defunct organelles (autophagy), and extracellular material via endocytosis."
+    },
+    {
+      term: "Peroxisome",
+      def:  "Single-membrane organelle that uses molecular oxygen to oxidize substrates, producing hydrogen peroxide (H₂O₂) which is immediately neutralized by catalase; central to β-oxidation of very-long-chain fatty acids and plasmalogen synthesis."
+    },
+    {
+      term: "Ribosome",
+      def:  "Macromolecular complex of rRNA and proteins (80S in eukaryotes: 60S + 40S subunits) that catalyzes mRNA-directed polypeptide synthesis through the elongation, translocation, and termination steps of translation."
+    },
+    {
+      term: "Nucleus",
+      def:  "Double-membrane-enclosed organelle housing the cell's chromosomal DNA; coordinates gene expression and DNA replication, and communicates with the cytoplasm via nuclear pore complexes that regulate macromolecule transport."
+    },
+    {
+      term: "Nucleolus",
+      def:  "Non-membrane-bound nuclear subcompartment where ribosomal DNA (rDNA) is transcribed by RNA Pol I, pre-rRNA is processed, and large and small ribosomal subunits are assembled before export to the cytoplasm."
+    },
+    {
+      term: "Nuclear Envelope",
+      def:  "Double lipid-bilayer structure (outer and inner membrane) continuous with the ER that encases the nucleus; contains ~2,000 nuclear pore complexes per cell that facilitate selective bidirectional macromolecular transport."
+    },
+    {
+      term: "Plasma Membrane",
+      def:  "Fluid mosaic phospholipid bilayer forming the cell boundary; regulates selective permeability via ion channels, carrier proteins, and pumps; hosts receptor tyrosine kinases and G-protein-coupled receptors for signal transduction."
+    },
+    {
+      term: "Cytoskeleton",
+      def:  "Dynamic network of actin microfilaments (7 nm), intermediate filaments (10 nm), and microtubules (25 nm) that maintains cell shape, powers motility through motor proteins (myosin, kinesin, dynein), and organizes intracellular traffic."
+    },
+    {
+      term: "Centriole",
+      def:  "Cylindrical organelle composed of nine triplet microtubule blades (9×3 arrangement) that forms the core of centrosomes; nucleates the mitotic spindle and serves as the basal body for cilia and flagella assembly."
+    },
+    {
+      term: "Chloroplast",
+      def:  "Double-membraned plant organelle with an internal thylakoid membrane system; light reactions in thylakoids (photosystem I & II) generate ATP and NADPH, which power CO₂ fixation via the Calvin cycle in the stroma."
+    },
+    {
+      term: "Vacuole",
+      def:  "Large single-membrane organelle in plant cells (tonoplast boundary) that maintains turgor pressure, stores metabolites, ions, and pigments, sequesters toxic compounds, and participates in autophagy and protein degradation."
+    },
+    {
+      term: "Cell Wall",
+      def:  "Rigid structural layer external to the plasma membrane; composed of cellulose microfibrils in plants, chitin in fungi, and peptidoglycan in bacteria; provides mechanical support, shape maintenance, and protection against osmotic lysis."
+    },
+    {
+      term: "Chromatin",
+      def:  "Complex of genomic DNA wound around histone octamers (~147 bp per nucleosome core); higher-order folding into 30-nm fibers and chromosomal loops is regulated by histone modifications (acetylation, methylation) to control gene accessibility."
+    },
+    {
+      term: "Flagellum (Eukaryotic)",
+      def:  "Long motile projection anchored to a basal body; driven by axonemal dynein motors causing sliding between doublet microtubules in a '9+2' arrangement, generating a wave-like beat for propulsion in sperm and single-celled organisms."
+    },
+    {
+      term: "Cilia",
+      def:  "Short, numerous hair-like projections with the same '9+2' axonemal microtubule architecture as flagella; generate coordinated metachronal waves to move mucus in airways, CSF in brain ventricles, or propel unicellular organisms."
+    },
+    {
+      term: "Endosome",
+      def:  "Membrane-bound sorting compartment in the endocytic pathway; early endosomes receive cargo from endocytosis and sort it for recycling to the plasma membrane, delivery to lysosomes, or transcytosis across polarized epithelial cells."
+    }
+  ];
+
+  /* ── State ──────────────────────────────────────────────────── */
+  let deck    = [];   // shuffled indices
+  let current = 0;   // index into deck
+  let flipped = false;
+  let correct = 0;
+  let incorrect = 0;
+  let answered = new Set();   // deck positions already answered
+
+  /* ── DOM refs ───────────────────────────────────────────────── */
+  const scene       = document.getElementById('scene');
+  const termText    = document.getElementById('term-text');
+  const defText     = document.getElementById('def-text');
+  const scoreCorr   = document.getElementById('score-correct');
+  const scoreIncorr = document.getElementById('score-incorrect');
+  const scoreRem    = document.getElementById('score-remaining');
+  const cardIndex   = document.getElementById('card-index');
+  const pct         = document.getElementById('pct');
+  const fill        = document.getElementById('progress-fill');
+  const btnCorr     = document.getElementById('btn-correct');
+  const btnIncorr   = document.getElementById('btn-incorrect');
+  const btnPrev     = document.getElementById('btn-prev');
+  const btnNext     = document.getElementById('btn-next');
+  const btnRestart  = document.getElementById('btn-restart');
+  const completion  = document.getElementById('completion');
+  const mainDeck    = document.querySelector('.scene');
+
+  /* ── Helpers ────────────────────────────────────────────────── */
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function startDeck() {
+    deck      = shuffle(cards.map((_, i) => i));
+    current   = 0;
+    flipped   = false;
+    correct   = 0;
+    incorrect = 0;
+    answered  = new Set();
+    completion.classList.remove('show');
+    scene.classList.remove('hidden');
+    document.getElementById('answer-btns').classList.remove('hidden');
+    document.querySelector('.nav-btns').style.display = '';
+    document.querySelector('.progress-wrap').style.display = '';
+    document.querySelector('.scoreboard').style.display = '';
+    updateCard();
+    updateScore();
+  }
+
+  function updateCard() {
+    const card = cards[deck[current]];
+    termText.textContent = card.term;
+    defText.textContent  = card.def;
+
+    // Reset flip without transition flash
+    scene.classList.remove('flipped');
+    flipped = false;
+
+    // Update answer buttons
+    if (answered.has(current)) {
+      btnCorr.disabled   = true;
+      btnIncorr.disabled = true;
+    } else {
+      btnCorr.disabled   = true;
+      btnIncorr.disabled = true;
+    }
+
+    // Navigation
+    btnPrev.disabled = (current === 0);
+    btnNext.disabled = (current === deck.length - 1);
+
+    // Progress
+    const done = answered.size;
+    const total = deck.length;
+    const percent = Math.round((done / total) * 100);
+    fill.style.width = percent + '%';
+    pct.textContent  = percent + '%';
+    cardIndex.textContent = `Card ${current + 1} of ${total}`;
+  }
+
+  function updateScore() {
+    scoreCorr.textContent   = correct;
+    scoreIncorr.textContent = incorrect;
+    scoreRem.textContent    = deck.length - answered.size;
+  }
+
+  function flipCard() {
+    flipped = !flipped;
+    scene.classList.toggle('flipped', flipped);
+    if (flipped && !answered.has(current)) {
+      btnCorr.disabled   = false;
+      btnIncorr.disabled = false;
+    }
+  }
+
+  function markAnswer(isCorrect) {
+    if (answered.has(current)) return;
+    answered.add(current);
+    if (isCorrect) correct++;
+    else incorrect++;
+    btnCorr.disabled   = true;
+    btnIncorr.disabled = true;
+    updateScore();
+
+    if (answered.size === deck.length) {
+      setTimeout(showCompletion, 600);
+    }
+  }
+
+  function showCompletion() {
+    const pctScore = Math.round((correct / deck.length) * 100);
+    const emoji = pctScore >= 80 ? '🏆' : pctScore >= 50 ? '💪' : '📚';
+    document.getElementById('comp-emoji').textContent = emoji;
+    document.getElementById('comp-msg').textContent =
+      `You scored ${pctScore}% (${correct}/${deck.length})`;
+    document.getElementById('res-correct').textContent   = correct;
+    document.getElementById('res-incorrect').textContent = incorrect;
+
+    // Hide main elements
+    scene.classList.add('hidden');
+    document.getElementById('answer-btns').classList.add('hidden');
+    document.querySelector('.nav-btns').style.display = 'none';
+    document.querySelector('.progress-wrap').style.display = 'none';
+    document.querySelector('.scoreboard').style.display = 'none';
+    completion.classList.add('show');
+  }
+
+  /* ── Event listeners ────────────────────────────────────────── */
+  scene.addEventListener('click', flipCard);
+  scene.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flipCard(); } });
+
+  btnCorr.addEventListener('click',   () => markAnswer(true));
+  btnIncorr.addEventListener('click', () => markAnswer(false));
+
+  btnPrev.addEventListener('click', () => {
+    if (current > 0) { current--; updateCard(); }
+  });
+  btnNext.addEventListener('click', () => {
+    if (current < deck.length - 1) { current++; updateCard(); }
+  });
+  btnRestart.addEventListener('click', startDeck);
+  document.getElementById('btn-play-again').addEventListener('click', startDeck);
+
+  /* ── Keyboard navigation ────────────────────────────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    if (e.key === 'ArrowRight' && !btnNext.disabled) { current++; updateCard(); }
+    if (e.key === 'ArrowLeft'  && !btnPrev.disabled) { current--; updateCard(); }
+    if (e.key === 'ArrowUp'    && !btnCorr.disabled)   markAnswer(true);
+    if (e.key === 'ArrowDown'  && !btnIncorr.disabled) markAnswer(false);
+  });
+
+  /* ── Init ───────────────────────────────────────────────────── */
+  startDeck();
+</script>
+</body>
+</html>
